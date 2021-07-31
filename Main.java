@@ -1,84 +1,46 @@
-package HomeTask2;
+package homeWork;
+import com.fasterxml.jackson.databind.ObjectMapper; // version 2.11.1
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 public class Main {
 
-    static void findHighRankWord(TreeMap<String, Integer> map){
-        int highRank = 0;
-        ArrayList<String> list = new ArrayList<>();
-        for(Map.Entry<String, Integer> entry : map.entrySet()){
-            if (entry.getValue() > highRank){
-                list.clear();
-                list.add(entry.getKey());
-                highRank = entry.getValue();
-            }
-            else if (entry.getValue() == highRank){
-                list.add(entry.getKey());
-            }
-        }
-        System.out.println("Максимальная частота = " + highRank);
-        System.out.println("Слова с этой частотой:");
-        for(String word : list){
-            System.out.println(word);
-        }
-    }
-
-    private static void showMap(TreeMap<String, Integer> map){
-        System.out.println("Статистика слов");
-        for(Map.Entry<String, Integer> entry : map.entrySet()){
-            System.out.println(entry.getKey() + " => " + entry.getValue());
-        }
-        System.out.println();
-    }
-
-    private static void showWords(TreeMap<String, Integer> map){
-        System.out.println("Отсортированный список слов");
-        for(Map.Entry<String, Integer> entry : map.entrySet()){
-            for (int i = 0; i < entry.getValue(); i++) {
-                System.out.print(entry.getKey() + " ");
-            }
-        }
-        System.out.println();
-    }
-
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Введите название файла: ");
-        String filename = scanner.nextLine();
+        String filename = "file.json";
+        try {
+            ArrayList<Company> companies = Parser.readCompany(filename);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy");
 
-        if (new File(filename).exists()){
-            TreeMap<String, Integer> map = new TreeMap<>();
+            System.out.println("Список компаний");
+            companies.forEach(t-> System.out.println(t.getName() + " - " + dateFormat.format(t.getFounded().getTime())));
 
-            try(BufferedReader br = new BufferedReader(new FileReader(filename)))
-            {
-                String s;
-                while((s=br.readLine()) != null){
-                    String[] words = s.split("[^a-zA-Z]");
-                    for(String word : words){
-                        if (word.length() == 0)
-                            continue;
-                        word = word.toLowerCase();
-                        if (map.containsKey(word)){
-                            map.replace(word, map.get(word) + 1);
-                        }
-                        else {
-                            map.put(word, 1);
-                        }
-                    }
-                }
-            }
-            catch(IOException ex){
-                System.out.println(ex.getMessage());
+            Calendar now = Calendar.getInstance();
+            ArrayList<Security> securities = new ArrayList<>();
+
+
+            for(Company company : companies) {
+                securities.addAll(company.getSecurities().stream().filter(p -> p.getDate().after(now)).collect(Collectors.toList()));
             }
 
-            showWords(map);
-            showMap(map);
-            findHighRankWord(map);
-        }
-        else{
-            System.out.println("Файл не найден");
+            securities.forEach(t-> System.out.println(t.getCode() + " " + t.getCompany().getName() + " " + t.getDate().getTime()));
+            System.out.println(securities.size());
+
+
+
+
+
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
         }
     }
 }
